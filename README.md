@@ -9,8 +9,12 @@ This project is a starting point for a Flutter application.
 
 ## Prerequisites
 
-make sure you have installed Flutter. 
+make sure you have installed Flutter, an Android emulator or a physical device. 
 - How to install Flutter: https://docs.flutter.dev/get-started/install
+
+## Step 1: Clone Repository
+```git clone https://github.com/AlvinHartono/mental_math_trainer_app.git```
+
   
 
 A few resources to get you started if this is your first Flutter project:
