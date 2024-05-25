@@ -1,10 +1,17 @@
 # mental_math_trainer_app
 
-A new Flutter project.
+Download Mental Math Trainer APK:
+https://bit.ly/MMT-APK
 
 ## Getting Started
 
 This project is a starting point for a Flutter application.
+
+## Prerequisites
+
+make sure you have installed Flutter. 
+- How to install Flutter: https://docs.flutter.dev/get-started/install
+  
 
 A few resources to get you started if this is your first Flutter project:
 
