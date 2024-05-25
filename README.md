@@ -3,9 +3,6 @@
 Download Mental Math Trainer APK:
 https://bit.ly/MMT-APK
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
 
 ## Prerequisites
 
