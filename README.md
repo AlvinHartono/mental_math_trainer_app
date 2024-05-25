@@ -3,7 +3,7 @@
 Download Mental Math Trainer APK:
 https://bit.ly/MMT-APK
 
-- Download the areeabi for older device or device with 32-bit ARM processors.
+- Download the armeabi for older device or device with 32-bit ARM processors.
 - Download the arm64 for newer device or device with 64-bit ARM processors.
 
 
