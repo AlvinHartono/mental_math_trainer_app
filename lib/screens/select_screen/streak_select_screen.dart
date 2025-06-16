@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mental_math_trainer_app/models/streak_mode.dart';
 import 'package:mental_math_trainer_app/providers/firebase_streak_provider.dart';
-import 'package:mental_math_trainer_app/providers/streak_provider.dart';
 import 'package:mental_math_trainer_app/screens/game_screens/streak_game_screen.dart';
 
 class StreakSelectScreen extends ConsumerWidget {

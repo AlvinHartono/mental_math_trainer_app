@@ -1,5 +1,4 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import 'package:mental_math_trainer_app/firebase/firebase_auth_services.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mental_math_trainer_app/models/streak_mode.dart';

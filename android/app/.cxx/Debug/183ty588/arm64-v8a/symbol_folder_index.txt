@@ -1,0 +1,1 @@
+C:\Alvin Data\Flutter\mental_math_trainer_app\build\app\intermediates\cxx\Debug\183ty588\obj\arm64-v8a

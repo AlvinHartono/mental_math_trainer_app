@@ -7,7 +7,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mental_math_trainer_app/firebase/firebase_auth_services.dart';
 import 'package:mental_math_trainer_app/providers/device_provider.dart';
-import 'package:mental_math_trainer_app/screens/authentication_screens/auth_check.dart';
 import 'package:mental_math_trainer_app/screens/authentication_screens/email_login.dart';
 import 'package:mental_math_trainer_app/widgets/loading_screen.dart';
 
@@ -42,12 +41,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       body: Stack(
         children: [
           Center(
-            child: Container(
+            child: SizedBox(
               width: deviceWidth,
               height: deviceHeight,
               child: Column(
                 children: [
-                  Container(
+                  SizedBox(
                     width: deviceWidth,
                     height: deviceHeight * 0.5,
                     child: Column(
@@ -86,7 +85,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ],
                     ),
                   ),
-                  Container(
+                  SizedBox(
                     width: deviceWidth,
                     height: deviceHeight * 0.3,
                     child: Column(
@@ -186,5 +185,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 //https://youtu.be/VCrXSFqdsoA?feature=shared
 //https://fonts.google.com/specimen/Exo+2
-
-

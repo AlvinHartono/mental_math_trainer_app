@@ -1,0 +1,2 @@
+C:/Alvin Data/Flutter/mental_math_trainer_app/android/app/.cxx/Debug/183ty588/x86_64/CMakeFiles/edit_cache.dir
+C:/Alvin Data/Flutter/mental_math_trainer_app/android/app/.cxx/Debug/183ty588/x86_64/CMakeFiles/rebuild_cache.dir
