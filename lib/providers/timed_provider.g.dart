@@ -6,7 +6,7 @@ part of 'timed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$timedProviderHash() => r'8d8b056eb574768dfc0d788fb57da2f2d53d9c7a';
+String _$timedProviderHash() => r'c5c19ab7d54b6ab056f14053ac8a13dd23d4c13f';
 
 /// See also [TimedProvider].
 @ProviderFor(TimedProvider)
@@ -23,4 +23,4 @@ final timedProviderProvider =
 
 typedef _$TimedProvider = AutoDisposeNotifier<TimedMode>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

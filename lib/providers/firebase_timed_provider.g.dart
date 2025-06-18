@@ -6,7 +6,7 @@ part of 'firebase_timed_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$firebaseTimedHash() => r'2865771a3cc8d7375f837c30daf7d6fc4194a1b4';
+String _$firebaseTimedHash() => r'838206a74822b2a3b61fd2f2e4a007442d82217f';
 
 /// See also [FirebaseTimed].
 @ProviderFor(FirebaseTimed)
@@ -23,4 +23,4 @@ final firebaseTimedProvider =
 
 typedef _$FirebaseTimed = AutoDisposeAsyncNotifier<String?>;
 // ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member
+// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

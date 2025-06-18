@@ -1,11 +1,9 @@
 import 'dart:math';
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:uuid/uuid.dart';
+import 'package:mental_math_trainer_app/models/streak_game_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:mental_math_trainer_app/firebase/firebase_firestore.dart';
-import 'package:mental_math_trainer_app/models/streak_mode.dart';
 import 'package:mental_math_trainer_app/providers/streak_provider.dart';
 import 'package:mental_math_trainer_app/screens/evaluation_screens/streak_evaluation_screen.dart';
 
@@ -20,161 +18,86 @@ class StreakGameScreen extends ConsumerStatefulWidget {
 
 class _StreakGameScreenState extends ConsumerState<StreakGameScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _controller = TextEditingController();
+  late final TextEditingController _controller;
 
-  bool isBroken = false;
-  int randomNumber1 = 0;
-  int randomNumber2 = 0;
-  int answer = 0;
-  int numQuestions = 1;
-  String question = '';
-  String operator = '';
-  Key _animatedTextKey = UniqueKey();
-  final start = DateTime.now();
-  String uuid = const Uuid().v4();
-
-  TextStyle randomTextTheme = GoogleFonts.exo2(
-    textStyle: const TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 80,
-      color: Colors.white,
-    ),
-  );
-  TextStyle whiteTextTheme = GoogleFonts.exo2(
-    textStyle: const TextStyle(
-      fontWeight: FontWeight.normal,
-      color: Colors.white,
-    ),
-  );
-  TextStyle greyTextTheme = GoogleFonts.exo2(
-    textStyle: const TextStyle(
-      fontWeight: FontWeight.normal,
-      color: Colors.grey,
-    ),
-  );
-
-  void randomize() {
-    setState(() {
-      // Determine difficulty level based on the number of questions
-      int maxNumber;
-      if (numQuestions <= 10) {
-        maxNumber = 10;
-      } else if (numQuestions <= 20) {
-        maxNumber = 100;
-      } else {
-        maxNumber = 1000;
-      }
-
-      randomNumber1 = random.nextInt(maxNumber + 1);
-      randomNumber2 = random.nextInt(maxNumber + 1);
-
-      // Randomly select an operator
-      List<String> operators = ['+', '-', '*', '/'];
-      operator = operators[random.nextInt(operators.length)];
-
-      // Calculate the answer based on the selected operator
-      switch (operator) {
-        case '+':
-          answer = randomNumber1 + randomNumber2;
-          break;
-        case '-':
-          answer = randomNumber1 - randomNumber2;
-          break;
-        case '*':
-          answer = randomNumber1 * randomNumber2;
-          break;
-        case '/':
-          // Ensure randomNumber2 is not zero and the result is an integer
-          randomNumber2 = randomNumber2 == 0 ? 1 : randomNumber2;
-          answer = randomNumber1 ~/ randomNumber2;
-          randomNumber1 =
-              answer * randomNumber2; // Adjust to ensure integer division
-          break;
-      }
-
-      question = "$randomNumber1 $operator $randomNumber2";
-      _animatedTextKey = UniqueKey();
-    });
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
   }
 
   @override
   void dispose() {
-    // Clean up the controller when the widget is disposed.
     _controller.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    void checkAns(int ans) {
-      setState(() {
-        if (ans == answer) {
-          numQuestions++;
-          _controller.clear();
-        } else {
-          isBroken = !isBroken;
-          Navigator.of(context).pushReplacement(MaterialPageRoute(
-            builder: (context) => const StreakEvaluationScreen(),
-          ));
-          ref.read(streakNotifierProvider.notifier).setStreak(
-                StreakMode(
-                  gameId: uuid,
-                  dateStart: start,
-                  streak: (numQuestions - 1).toString(),
-                  dateEnd: DateTime.now(),
-                ),
-              );
-          final streak = ref.watch(streakNotifierProvider);
+    // Watch the game state from the provider
+    final gameState = ref.watch(streakNotifierProvider);
+    final question =
+        "${gameState.number1} ${gameState.operator} ${gameState.number2}";
 
-          try {
-            FirebaseFirestoreHelper Firebasehelper = FirebaseFirestoreHelper();
-            Firebasehelper.sendStreakData(streak);
-            print("send Successful");
-          } catch (e) {
-            print("sendStreakData error: $e");
-          }
-        }
-        randomize();
-      });
-    }
+    // Listen for the game to end to trigger navigation
+    ref.listen<StreakGameState>(streakNotifierProvider, (previous, next) {
+      if (next.isFinished) {
+        Navigator.of(context).pushReplacement(MaterialPageRoute(
+          builder: (context) => const StreakEvaluationScreen(),
+        ));
+      }
+    });
 
-    Future<bool> _onWillPop(BuildContext context) async {
-      final shouldExit = await showDialog(
-        barrierDismissible: false,
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Are you sure?'),
-          content: const Text('Unsaved changes will be lost.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, true);
-                Navigator.pop(context, true);
-              },
-              child: const Text('Exit'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Cancel'),
-            ),
-          ],
-        ),
-      );
-      return shouldExit ?? false;
-    }
+    // Text styles
+    TextStyle randomTextTheme = GoogleFonts.exo2(
+      textStyle: const TextStyle(
+        fontWeight: FontWeight.bold,
+        fontSize: 80,
+        color: Colors.white,
+      ),
+    );
+    TextStyle whiteTextTheme = GoogleFonts.exo2(
+      textStyle: const TextStyle(
+        fontWeight: FontWeight.normal,
+        color: Colors.white,
+      ),
+    );
+    TextStyle greyTextTheme = GoogleFonts.exo2(
+      textStyle: const TextStyle(
+        fontWeight: FontWeight.normal,
+        color: Colors.grey,
+      ),
+    );
 
-    randomize();
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) {
-          return;
-        }
-        _onWillPop(context);
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Are you sure?'),
+            content: const Text('Your streak will be lost!'),
+            actions: [
+              TextButton(
+                // Pop the dialog, then pop the game screen
+                onPressed: () =>
+                    Navigator.of(context).popUntil((route) => route.isFirst),
+                child: const Text('Exit'),
+              ),
+              TextButton(
+                // Just pop the dialog
+                onPressed: () => Navigator.of(context).pop(),
+                child: const Text('Cancel'),
+              ),
+            ],
+          ),
+        );
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(numQuestions.toString()),
+          title: Text("Streak: ${gameState.currentStreak}"),
           centerTitle: true,
           backgroundColor: const Color.fromARGB(255, 66, 87, 112),
         ),
@@ -186,19 +109,14 @@ class _StreakGameScreenState extends ConsumerState<StreakGameScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 AnimatedTextKit(
-                  key: _animatedTextKey,
+                  key: ValueKey(question),
                   isRepeatingAnimation: false,
                   animatedTexts: [
-                    TyperAnimatedText(
-                      question,
-                      textStyle: randomTextTheme,
-                    ),
+                    TyperAnimatedText(question, textStyle: randomTextTheme),
                   ],
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -227,13 +145,14 @@ class _StreakGameScreenState extends ConsumerState<StreakGameScreen> {
                         child: ElevatedButton(
                           onPressed: () {
                             if (_formKey.currentState!.validate()) {
-                              int userAns = int.parse(_controller.text);
-                              checkAns(userAns);
+                              final userAnswer = int.parse(_controller.text);
+                              ref
+                                  .read(streakNotifierProvider.notifier)
+                                  .submitAnswer(userAnswer);
+                              _controller.clear();
                             }
                           },
-                          child: const Icon(
-                            Icons.send,
-                          ),
+                          child: const Icon(Icons.send),
                         ),
                       ),
                     ],
