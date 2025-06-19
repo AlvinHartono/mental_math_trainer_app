@@ -48,6 +48,7 @@ dependencies:
   build_runner: ^2.4.9
   flutter_launcher_icons: ^0.13.1
   google_sign_in: ^6.3.0
+  rename_app: ^1.6.3
 
 dev_dependencies:
   flutter_test:
