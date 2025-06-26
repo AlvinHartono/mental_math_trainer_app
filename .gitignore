@@ -44,5 +44,7 @@ app.*.map.json
 android/app/google-services.json
 
 # firebase_option
-lib/firebase_options.dart
+/lib/firebase_options.dart
+
+firebase.json
 
