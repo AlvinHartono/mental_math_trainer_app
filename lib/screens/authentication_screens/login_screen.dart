@@ -127,7 +127,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               });
                               try {
                                 UserCredential userCredential =
-                                    await FirebaseAuthService()
+                                    await FirebaseAuthService
                                         .signInWithGoogle();
                                 print(userCredential);
                               } catch (e) {

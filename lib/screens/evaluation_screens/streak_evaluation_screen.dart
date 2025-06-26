@@ -37,7 +37,7 @@ class StreakEvaluationScreen extends ConsumerWidget {
                 style: header2WhiteTextStyle,
               ),
               Text(
-                streak.streak,
+                streak.currentStreak.toString(),
                 style: streakStyle,
               ),
               ElevatedButton.icon(
