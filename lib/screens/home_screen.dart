@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mental_math_trainer_app/screens/account_screen.dart';
+import 'package:mental_math_trainer_app/screens/profile_screen.dart';
 import 'package:mental_math_trainer_app/screens/game_select_screen.dart';
 import 'package:mental_math_trainer_app/screens/leaderboard.dart';
 
@@ -12,7 +12,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int currentPageIndex = 0;
-  final items = const [GameSelectScreen(), Leaderboards(), AccountScreen()];
+  final items = const [GameSelectScreen(), Leaderboards(), ProfileScreen()];
   final PageController _pageController = PageController(initialPage: 0);
   @override
   void dispose() {

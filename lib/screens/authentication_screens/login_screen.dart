@@ -95,7 +95,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           height: (deviceHeight * 0.4 * 0.05),
                         ),
                         Text(
-                          "Mental Math Trainer",
+                          "FlexMath",
                           style: GoogleFonts.exo2(
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.bold,
@@ -105,7 +105,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           ),
                         ),
                         Text(
-                          "Train your mental mathematics.",
+                          "Train and Flex Your Mental Mathematics.",
                           style: GoogleFonts.exo2(
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.normal,
@@ -131,12 +131,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                         .signInWithGoogle();
                                 print(userCredential);
                               } catch (e) {
-                                print(e);
                                 // Handle the error appropriately
                               } finally {
-                                setState(() {
-                                  isLoading = false;
-                                });
+                                if (mounted) {
+                                  setState(() {
+                                    isLoading = false;
+                                  });
+                                }
                               }
                             },
                             icon: const ImageIcon(
