@@ -12,6 +12,7 @@ import 'package:mental_math_trainer_app/models/timed_mode.dart';
 import 'package:mental_math_trainer_app/providers/device_provider.dart';
 import 'package:mental_math_trainer_app/providers/timed_provider.dart';
 import 'package:mental_math_trainer_app/screens/evaluation_screens/timed_evalutation_screen.dart';
+import 'package:mental_math_trainer_app/widgets/pause_menu.dart';
 import 'package:mental_math_trainer_app/widgets/stats_custom.dart';
 import 'package:uuid/uuid.dart';
 
@@ -241,107 +242,132 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
         setState(() {
           isPaused = true;
         });
-        _showPauseMenu(context);
       },
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color.fromARGB(255, 111, 66, 112),
           leading: IconButton(
-              onPressed: () {
-                setState(() {
-                  isPaused = !isPaused;
-                });
-                if (isPaused) {
-                  _showPauseMenu(context);
-                }
-              },
-              icon: Icon(isPaused ? Icons.play_arrow : Icons.pause)),
+            onPressed: () {
+              setState(() {
+                isPaused = !isPaused;
+              });
+            },
+            icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
+          ),
           title: Text(
-              '${minute.toString().padLeft(2, '0')}:${second.toString().padLeft(2, '0')}'), //_formatTime(_totalSeconds)
+            '${minute.toString().padLeft(2, '0')}:${second.toString().padLeft(2, '0')}',
+          ),
           centerTitle: true,
         ),
         backgroundColor: const Color.fromARGB(255, 111, 66, 112),
-        body: Container(
-          width: deviceSize!.width,
-          height: deviceSize.height,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: deviceSize.width,
-                height: deviceSize.height * 0.5,
-                child: Column(
-                  children: [
-                    Text(
-                      'Question $numQuestions',
-                      style: whiteTextStyle,
+        body: Stack(
+          children: [
+            Container(
+              width: deviceSize!.width,
+              height: deviceSize.height,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    width: deviceSize.width,
+                    height: deviceSize.height * 0.5,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Question $numQuestions',
+                          style: whiteTextStyle,
+                        ),
+                        AnimatedTextKit(
+                          key: _animatedTextkey,
+                          animatedTexts: [
+                            TyperAnimatedText(
+                              question,
+                              textStyle: randomTextTheme,
+                            ),
+                          ],
+                          isRepeatingAnimation: false,
+                        ),
+                        StatsWidget(correct: correct, incorrect: incorrect),
+                      ],
                     ),
-                    AnimatedTextKit(
-                      key: _animatedTextkey,
-                      animatedTexts: [
-                        TyperAnimatedText(
-                          question,
-                          textStyle: randomTextTheme,
+                  ),
+                  Container(
+                    width: deviceSize.width,
+                    height: deviceSize.height * 0.3,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 150,
+                          height: 200,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              checkAns(answer);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              "$answer",
+                              style: buttonTextStyle(),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 15,
+                        ),
+                        SizedBox(
+                          width: 150,
+                          height: 200,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              checkAns(wrongAns);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.blue,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            child: Text(
+                              "$wrongAns",
+                              style: buttonTextStyle(),
+                            ),
+                          ),
                         ),
                       ],
-                      isRepeatingAnimation: false,
                     ),
-                    StatsWidget(correct: correct, incorrect: incorrect),
-                  ],
-                ),
+                  )
+                ],
               ),
-              Container(
-                width: deviceSize.width,
-                height: deviceSize.height * 0.3,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 150,
-                      height: 200,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          checkAns(answer);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "$answer",
-                          style: buttonTextStyle(),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(
-                      width: 15,
-                    ),
-                    SizedBox(
-                      width: 150,
-                      height: 200,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          checkAns(wrongAns);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.blue,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        child: Text(
-                          "$wrongAns",
-                          style: buttonTextStyle(),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )
-            ],
-          ),
+            ),
+            if (isPaused)
+              PauseMenu(
+                onContinue: () {
+                  setState(() {
+                    isPaused = false;
+                  });
+                },
+                onRestart: () {
+                  setState(() {
+                    isPaused = false;
+                    correct = 0;
+                    incorrect = 0;
+                    minute = duration.duration;
+                    second = 0;
+                    numQuestions = 1;
+                    randomize();
+                    _startTimer();
+                  });
+                },
+                onHome: () {
+                  Navigator.of(context).popUntil((route) => route.isFirst);
+                },
+              ),
+          ],
         ),
       ),
     );
