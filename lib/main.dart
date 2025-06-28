@@ -32,8 +32,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            primary: const Color.fromRGBO(52, 103, 178, 1),
-            seedColor: const Color.fromRGBO(52, 103, 178, 1)),
+            primary: const Color.fromRGBO(52, 103, 178, 100),
+            seedColor: const Color.fromRGBO(52, 103, 178, 100)),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
             backgroundColor: Color.fromRGBO(52, 103, 178, 1),
@@ -46,9 +46,9 @@ class MyApp extends StatelessWidget {
           backgroundColor: const Color.fromRGBO(52, 103, 178, 1),
           height: 65,
           indicatorColor: Colors.white,
-          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
-              (Set<WidgetState> states) {
-            if (states.contains(WidgetState.selected)) {
+          iconTheme: MaterialStateProperty.resolveWith<IconThemeData>(
+              (Set<MaterialState> states) {
+            if (states.contains(MaterialState.selected)) {
               return const IconThemeData(
                   color:
                       Color.fromRGBO(52, 103, 178, 1)); // Selected icon color
@@ -57,10 +57,10 @@ class MyApp extends StatelessWidget {
                   color: Colors.white); // Unselected icon color
             }
           }),
-          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
-              (Set<WidgetState> states) {
+          labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>(
+              (Set<MaterialState> states) {
             // Check if the 'selected' state is present
-            if (states.contains(WidgetState.selected)) {
+            if (states.contains(MaterialState.selected)) {
               return const TextStyle(
                   color: Colors.white); // White text for selected item
             } else {

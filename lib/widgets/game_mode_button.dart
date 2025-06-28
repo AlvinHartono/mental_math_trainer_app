@@ -27,7 +27,7 @@ class GameModeButton extends StatelessWidget {
           color: color,
         ),
         height: 200,
-        width: MediaQuery.of(context).size.width * 0.95,
+        width: MediaQuery.of(context).size.width * 0.8,
         child: SizedBox(
           width: (MediaQuery.of(context).size.width * 0.8),
           height: 200,

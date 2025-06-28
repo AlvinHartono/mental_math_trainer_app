@@ -22,7 +22,7 @@ class GameSelectScreen extends StatelessWidget {
         child: SingleChildScrollView(
           child: Center(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(0, 30, 0, 0),
+              padding: EdgeInsets.fromLTRB(0, 40, 0, 0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
