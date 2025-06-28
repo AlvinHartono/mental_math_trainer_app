@@ -20,6 +20,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         title: const Text('Profile'),
         centerTitle: true,
       ),
+      backgroundColor: Theme.of(context).colorScheme.primary,
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -41,7 +42,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           user?.displayName ?? 'User',
                           style: const TextStyle(
                             fontSize: 22,
-                            color: Colors.black,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -49,6 +50,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           user?.email ?? 'youremail@example.com',
                           style: const TextStyle(
                             fontSize: 16,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -95,11 +97,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
+        leading: Icon(
+          icon,
+          color: Colors.white,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+          ),
+        ),
         trailing: const Icon(
           Icons.arrow_forward_ios,
           size: 16,
+          color: Colors.white,
         ),
         onTap: onTap,
         shape: RoundedRectangleBorder(

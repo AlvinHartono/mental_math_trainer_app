@@ -23,7 +23,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
       bottomNavigationBar: NavigationBar(
         destinations: const <Widget>[
           NavigationDestination(
@@ -47,6 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
       ),
+      backgroundColor: Theme.of(context).primaryColor,
       body: PageView(
         controller: _pageController,
         onPageChanged: (value) {
