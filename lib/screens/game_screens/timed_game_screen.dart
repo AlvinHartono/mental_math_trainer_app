@@ -18,6 +18,8 @@ import 'package:uuid/uuid.dart';
 
 Random random = Random();
 
+enum DifficultyLevel { easy, medium, hard }
+
 class TimedGameScreen extends ConsumerStatefulWidget {
   const TimedGameScreen(
       {super.key, required this.difficulty, required this.duration});
@@ -32,7 +34,7 @@ class TimedGameScreen extends ConsumerStatefulWidget {
 class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   bool isPaused = false;
   int correct = 0, incorrect = 0;
-  late ItemChoiceDifficulty difficulty;
+  late DifficultyLevel difficulty;
   late ItemChoiceDuration duration;
   int randomNumber1 = 0;
   int randomNumber2 = 0;
@@ -61,9 +63,8 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   );
 
   double getFontSize() {
-    return difficulty == 1000
-        ? 36
-        : 48; // Change font size if difficulty is 1000
+    if (difficulty == DifficultyLevel.hard) return 36;
+    return 48;
   }
 
   TextStyle buttonTextStyle() {
@@ -77,7 +78,13 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   @override
   void initState() {
     super.initState();
-    difficulty = widget.difficulty;
+    if (widget.difficulty.difficulty == 1000) {
+      difficulty = DifficultyLevel.hard;
+    } else if (widget.difficulty.difficulty == 100) {
+      difficulty = DifficultyLevel.medium;
+    } else {
+      difficulty = DifficultyLevel.easy;
+    }
     duration = widget.duration;
     minute = duration.duration;
     randomize();
@@ -123,15 +130,45 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
 
   void randomize() {
     setState(() {
-      randomNumber1 = random.nextInt(difficulty.difficulty);
-      randomNumber2 = random.nextInt(difficulty.difficulty);
+      int maxNumber = 0;
+      switch (difficulty) {
+        case DifficultyLevel.hard:
+          maxNumber = 1000;
+          break;
+        case DifficultyLevel.medium:
+          maxNumber = 100;
+          break;
+        default:
+          maxNumber = 10;
+          break;
+      }
+
+      randomNumber1 = random.nextInt(maxNumber);
+      randomNumber2 = random.nextInt(maxNumber);
       answer = randomNumber1 + randomNumber2;
       question = '$randomNumber1 + $randomNumber2';
 
       // Generate a wrong answer that is different from the correct answer
-      do {
-        wrongAns = random.nextInt(difficulty.difficulty * 2);
-      } while (wrongAns == answer);
+      // do {
+      //   wrongAns = random.nextInt(difficulty.difficulty * 2);
+      // } while (wrongAns == answer);
+
+      // Improved wrong answer generation to be similar to the right answer by introducing offset
+      int offset = random.nextInt(3) + 1;
+      if (random.nextBool()) {
+        wrongAns = answer + offset;
+      } else {
+        wrongAns = answer - offset;
+      }
+
+      // Ensure wrongAns is not negative if numbers are expected to be positive
+      if (wrongAns < 0 && maxNumber < 100) {
+        wrongAns = answer + offset;
+      }
+
+      if (wrongAns == answer) {
+        wrongAns += (random.nextBool() ? 1 : -1);
+      }
     });
 
     _animatedTextkey = UniqueKey();
