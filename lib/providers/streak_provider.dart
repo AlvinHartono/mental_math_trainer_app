@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:mental_math_trainer_app/firebase/firebase_firestore.dart';
 import 'package:mental_math_trainer_app/models/streak_game_state.dart';
 import 'package:mental_math_trainer_app/models/streak_mode.dart';
+import 'package:mental_math_trainer_app/services/question_generator.dart';
 import 'package:uuid/v4.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,9 +14,17 @@ part 'streak_provider.g.dart';
 class StreakNotifier extends _$StreakNotifier {
   final FirebaseFirestoreHelper _firestoreHelper = FirebaseFirestoreHelper();
   final Random _random = Random();
+  final QuestionGenerator _questionGenerator = QuestionGenerator();
   @override
   StreakGameState build() {
-    return StreakGameState.initial();
+    final initialQuestion = _questionGenerator.generateQuestion(10, '+');
+    return StreakGameState(
+      number1: initialQuestion.number1,
+      number2: initialQuestion.number2,
+      operator: initialQuestion.operator,
+      answer: initialQuestion.answer,
+      startTime: DateTime.now(),
+    );
   }
 
   // Method to generate a new question
@@ -30,19 +39,21 @@ class StreakNotifier extends _$StreakNotifier {
     } else {
       maxNumber = 1000;
     }
-    final number1 = _random.nextInt(maxNumber + 1);
-    final number2 = _random.nextInt(maxNumber + 1);
+    // final number1 = _random.nextInt(maxNumber + 1);
+    // final number2 = _random.nextInt(maxNumber + 1);
 
-    // for simplicity, only use addition.
-    final newOperator = '+';
-    final newAnswer = number1 + number2;
+    // // for simplicity, only use addition.
+    // final newOperator = '+';
+    // final newAnswer = number1 + number2;
+
+    final newQuestion = _questionGenerator.generateQuestion(maxNumber, '+');
 
     // Update the state with the new question
     state = state.copyWith(
-      number1: number1,
-      number2: number2,
-      operator: newOperator,
-      answer: newAnswer,
+      number1: newQuestion.number1,
+      number2: newQuestion.number2,
+      operator: newQuestion.operator,
+      answer: newQuestion.answer,
     );
   }
 

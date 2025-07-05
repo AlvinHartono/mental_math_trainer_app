@@ -12,6 +12,7 @@ import 'package:mental_math_trainer_app/models/timed_mode.dart';
 import 'package:mental_math_trainer_app/providers/device_provider.dart';
 import 'package:mental_math_trainer_app/providers/timed_provider.dart';
 import 'package:mental_math_trainer_app/screens/evaluation_screens/timed_evalutation_screen.dart';
+import 'package:mental_math_trainer_app/services/question_generator.dart';
 import 'package:mental_math_trainer_app/widgets/pause_menu.dart';
 import 'package:mental_math_trainer_app/widgets/stats_custom.dart';
 import 'package:uuid/uuid.dart';
@@ -34,21 +35,22 @@ class TimedGameScreen extends ConsumerStatefulWidget {
 class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   bool isPaused = false;
   int correct = 0, incorrect = 0;
-  late DifficultyLevel difficulty;
+  late int maxNumberDifficulty;
+  DifficultyLevel difficulty = DifficultyLevel.easy;
   late ItemChoiceDuration duration;
-  int randomNumber1 = 0;
-  int randomNumber2 = 0;
-  int answer = 0;
-  int wrongAns = 0;
-  int numQuestions = 1;
+  late Question _currentQuestion;
+  final QuestionGenerator _questionGenerator = QuestionGenerator();
   final start = DateTime.now();
-  String question = '';
+  // String question = '';
   Key _animatedTextkey = UniqueKey();
 
   String uuid = const Uuid().v4();
 
   Timer? _timer;
   int second = 0, minute = 0;
+
+  late int _button1Answer;
+  late int _button2Answer;
 
   TextStyle whiteTextStyle = const TextStyle(
     color: Colors.white,
@@ -78,16 +80,19 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.difficulty.difficulty == 1000) {
-      difficulty = DifficultyLevel.hard;
-    } else if (widget.difficulty.difficulty == 100) {
-      difficulty = DifficultyLevel.medium;
-    } else {
-      difficulty = DifficultyLevel.easy;
-    }
+
+    maxNumberDifficulty = widget.difficulty.difficulty;
     duration = widget.duration;
     minute = duration.duration;
-    randomize();
+
+    if (maxNumberDifficulty == 10) {
+      difficulty = DifficultyLevel.easy;
+    } else if (maxNumberDifficulty == 100) {
+      difficulty = DifficultyLevel.medium;
+    } else {
+      difficulty = DifficultyLevel.hard;
+    }
+    _generateNewQuestion();
   }
 
   @override
@@ -114,7 +119,8 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
             if (second == 0) {
               if (minute == 0) {
                 timer.cancel();
-                checkGame();
+                _endGame();
+                // checkGame();
               } else {
                 minute--;
                 second = 59;
@@ -128,76 +134,50 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
     );
   }
 
-  void randomize() {
-    setState(() {
-      int maxNumber = 0;
-      switch (difficulty) {
-        case DifficultyLevel.hard:
-          maxNumber = 1000;
-          break;
-        case DifficultyLevel.medium:
-          maxNumber = 100;
-          break;
-        default:
-          maxNumber = 10;
-          break;
-      }
-
-      randomNumber1 = random.nextInt(maxNumber);
-      randomNumber2 = random.nextInt(maxNumber);
-      answer = randomNumber1 + randomNumber2;
-      question = '$randomNumber1 + $randomNumber2';
-
-      // Generate a wrong answer that is different from the correct answer
-      // do {
-      //   wrongAns = random.nextInt(difficulty.difficulty * 2);
-      // } while (wrongAns == answer);
-
-      // Improved wrong answer generation to be similar to the right answer by introducing offset
-      int offset = random.nextInt(3) + 1;
-      if (random.nextBool()) {
-        wrongAns = answer + offset;
-      } else {
-        wrongAns = answer - offset;
-      }
-
-      // Ensure wrongAns is not negative if numbers are expected to be positive
-      if (wrongAns < 0 && maxNumber < 100) {
-        wrongAns = answer + offset;
-      }
-
-      if (wrongAns == answer) {
-        wrongAns += (random.nextBool() ? 1 : -1);
-      }
-    });
-
+  void _generateNewQuestion() {
+    _currentQuestion =
+        _questionGenerator.generateQuestion(maxNumberDifficulty, '+');
     _animatedTextkey = UniqueKey();
+
+    List<int> answers = [_currentQuestion.answer, _currentQuestion.wrongAnswer];
+
+    answers.shuffle(random);
+
+    _button1Answer = answers[0];
+    _button2Answer = answers[1];
+
+    setState(() {});
   }
 
-  void checkAns(int ans) {
+  void checkAnswer(int userAnswer) {
     setState(() {
-      if (ans == answer) {
+      if (userAnswer == _currentQuestion.answer) {
         correct++;
       } else {
         incorrect++;
       }
-      numQuestions++;
+      _generateNewQuestion();
     });
-    randomize();
   }
 
-  void checkGame() {
+  void _endGame() {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (context) => const TimedEvaluationScreen(),
     ));
+
+    final totalQuestions = correct + incorrect;
+    final accuracy = totalQuestions > 0
+        ? (correct / totalQuestions * 100).toStringAsFixed(0)
+        : 0.toString();
+
     ref.read(timedProviderProvider.notifier).setTimed(TimedMode(
         correct: correct.toString(),
         incorrect: incorrect.toString(),
         dateStart: start,
         dateEnd: DateTime.now(),
-        accuracy: (correct / numQuestions * 100).toStringAsFixed(0),
+        accuracy: accuracy,
         gameId: uuid,
-        numQuestion: numQuestions));
+        numQuestion: totalQuestions));
 
     final timed = ref.watch(timedProviderProvider);
 
@@ -214,71 +194,72 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
     }
   }
 
-  Future<void> _showPauseMenu(BuildContext context) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Game Paused'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: const <Widget>[
-                Text('Select an option:'),
-              ],
-            ),
-          ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Continue'),
-              onPressed: () {
-                setState(() {
-                  isPaused = false;
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Restart'),
-              onPressed: () {
-                setState(() {
-                  isPaused = false;
-                  correct = 0;
-                  incorrect = 0;
-                  minute = duration.duration;
-                  second = 0;
-                  numQuestions = 1;
-                  randomize();
-                  _startTimer();
-                });
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Home'),
-              onPressed: () {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
+  // Future<void> _showPauseMenu(BuildContext context) async {
+  //   return showDialog<void>(
+  //     context: context,
+  //     barrierDismissible: false,
+  //     builder: (BuildContext context) {
+  //       return AlertDialog(
+  //         title: const Text('Game Paused'),
+  //         content: SingleChildScrollView(
+  //           child: ListBody(
+  //             children: const <Widget>[
+  //               Text('Select an option:'),
+  //             ],
+  //           ),
+  //         ),
+  //         actions: <Widget>[
+  //           TextButton(
+  //             child: const Text('Continue'),
+  //             onPressed: () {
+  //               setState(() {
+  //                 isPaused = false;
+  //               });
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //           TextButton(
+  //             child: const Text('Restart'),
+  //             onPressed: () {
+  //               setState(() {
+  //                 isPaused = false;
+  //                 correct = 0;
+  //                 incorrect = 0;
+  //                 minute = duration.duration;
+  //                 second = 0;
+  //                 // numQuestions = 1;
+  //                 _generateNewQuestion();
+  //                 _startTimer();
+  //               });
+  //               Navigator.of(context).pop();
+  //             },
+  //           ),
+  //           TextButton(
+  //             child: const Text('Home'),
+  //             onPressed: () {
+  //               Navigator.of(context).popUntil((route) => route.isFirst);
+  //             },
+  //           ),
+  //         ],
+  //       );
+  //     },
+  //   );
+  // }
 
   @override
   Widget build(BuildContext context) {
     final deviceSize = ref.watch(deviceSizeProvider);
+    final questionText =
+        '${_currentQuestion.number1} ${_currentQuestion.operator} ${_currentQuestion.number2}';
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
-        if (didPop) {
-          return;
-        }
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
         setState(() {
           isPaused = true;
         });
+        // _showPauseMenu(context);
       },
       child: Scaffold(
         appBar: AppBar(
@@ -288,6 +269,11 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
               setState(() {
                 isPaused = !isPaused;
               });
+              // if (isPaused) {
+              //   // _showPauseMenu(context);
+              // } else {
+              //   Navigator.of(context).pop();
+              // }
             },
             icon: Icon(isPaused ? Icons.play_arrow : Icons.pause),
           ),
@@ -299,26 +285,26 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
         backgroundColor: const Color.fromARGB(255, 111, 66, 112),
         body: Stack(
           children: [
-            Container(
+            SizedBox(
               width: deviceSize!.width,
               height: deviceSize.height,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Container(
+                  SizedBox(
                     width: deviceSize.width,
                     height: deviceSize.height * 0.5,
                     child: Column(
                       children: [
                         Text(
-                          'Question $numQuestions',
+                          'Question ${correct + incorrect + 1}',
                           style: whiteTextStyle,
                         ),
                         AnimatedTextKit(
                           key: _animatedTextkey,
                           animatedTexts: [
                             TyperAnimatedText(
-                              question,
+                              questionText,
                               textStyle: randomTextTheme,
                             ),
                           ],
@@ -328,7 +314,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                       ],
                     ),
                   ),
-                  Container(
+                  SizedBox(
                     width: deviceSize.width,
                     height: deviceSize.height * 0.3,
                     child: Row(
@@ -339,7 +325,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                           height: 200,
                           child: ElevatedButton(
                             onPressed: () {
-                              checkAns(answer);
+                              checkAnswer(_button1Answer);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.red,
@@ -348,7 +334,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                               ),
                             ),
                             child: Text(
-                              "$answer",
+                              "$_button1Answer",
                               style: buttonTextStyle(),
                             ),
                           ),
@@ -361,7 +347,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                           height: 200,
                           child: ElevatedButton(
                             onPressed: () {
-                              checkAns(wrongAns);
+                              checkAnswer(_button2Answer);
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.blue,
@@ -370,7 +356,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                               ),
                             ),
                             child: Text(
-                              "$wrongAns",
+                              "$_button2Answer",
                               style: buttonTextStyle(),
                             ),
                           ),
@@ -395,8 +381,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
                     incorrect = 0;
                     minute = duration.duration;
                     second = 0;
-                    numQuestions = 1;
-                    randomize();
+                    _generateNewQuestion();
                     _startTimer();
                   });
                 },

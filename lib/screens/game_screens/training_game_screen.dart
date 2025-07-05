@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mental_math_trainer_app/providers/device_provider.dart';
 import 'package:mental_math_trainer_app/screens/evaluation_screens/training_evaluation_screen.dart';
+import 'package:mental_math_trainer_app/services/question_generator.dart';
 import 'package:mental_math_trainer_app/widgets/stats_custom.dart';
 
 Random random = Random();
@@ -20,12 +21,11 @@ class GameWarmupScreen extends ConsumerStatefulWidget {
 
 class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
   int correct = 0, incorrect = 0;
-  int difficulty = 10;
-  int randomNumber1 = 0;
-  int randomNumber2 = 0;
-  int answer = 0;
-  String question = '';
-  int numQuestions = 1;
+  late int maxNumberDifficulty;
+  late String selectedOperator;
+  late Question _currentQuestion;
+  final QuestionGenerator _questionGenerator = QuestionGenerator();
+  int numQuestionsAnswered = 0;
   Key _animatedTextKey = UniqueKey();
 
   TextStyle randomTextTheme = GoogleFonts.exo2(
@@ -36,7 +36,7 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
     ),
   );
   double getFontSize() {
-    return difficulty == 1000
+    return maxNumberDifficulty == 1000
         ? 36
         : 48; // Change font size if difficulty is 100
   }
@@ -52,53 +52,41 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
   @override
   void initState() {
     super.initState();
-    difficulty = widget.difficulty;
-    randomize();
+    maxNumberDifficulty = widget.difficulty;
+    selectedOperator = widget.operator;
+    _generateNewQuestion();
   }
 
-  void randomize() {
-    setState(() {
-      randomNumber1 = random.nextInt(difficulty);
-      randomNumber2 = random.nextInt(difficulty);
-
-      switch (widget.operator) {
-        case '+':
-          answer = randomNumber1 + randomNumber2;
-          question = '$randomNumber1 + $randomNumber2';
-          break;
-        case '-':
-          answer = randomNumber1 - randomNumber2;
-          question = '$randomNumber1 - $randomNumber2';
-          break;
-        case '*':
-          answer = randomNumber1 * randomNumber2;
-          question = '$randomNumber1 * $randomNumber2';
-          break;
-        case '/':
-          // Ensure no division by zero and integers for division
-          randomNumber2 = randomNumber2 == 0 ? 1 : randomNumber2;
-          randomNumber1 = randomNumber1 - (randomNumber1 % randomNumber2);
-          answer = randomNumber1 ~/ randomNumber2;
-          question = '$randomNumber1 / $randomNumber2';
-          break;
-        default:
-          answer = randomNumber1 + randomNumber2;
-          question = '$randomNumber1 + $randomNumber2';
-      }
-
-      _animatedTextKey = UniqueKey(); // Change the key to restart animation
-    });
+  void _generateNewQuestion() {
+    _currentQuestion = _questionGenerator.generateQuestion(
+        maxNumberDifficulty, selectedOperator);
+    _animatedTextKey = UniqueKey();
+    setState(() {});
   }
 
-  void checkAns(int ans) {
+  void _checkAnswer(int userAnswer) {
     setState(() {
-      if (ans == answer) {
+      if (userAnswer == _currentQuestion.answer) {
         correct++;
       } else {
         incorrect++;
       }
+      numQuestionsAnswered++;
     });
-    numQuestions++;
+    _checkGameProgress();
+    _generateNewQuestion();
+  }
+
+  void _checkGameProgress() {
+    if (numQuestionsAnswered == 30) {
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => TrainingEvaluationScreen(
+            correct: correct,
+            incorrect: incorrect,
+            difficulty: maxNumberDifficulty,
+            operator: selectedOperator),
+      ));
+    }
   }
 
   Future<bool> _onWillPop(BuildContext context) async {
@@ -112,12 +100,12 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context, true);
-              Navigator.pop(context, true);
+              Navigator.of(context).popUntil((route) => route.isFirst);
             },
             child: const Text('Exit'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
         ],
@@ -128,137 +116,114 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    void checkGame() {
-      if (numQuestions == 30) {
-        Navigator.of(context).pushReplacement(MaterialPageRoute(
-          builder: (context) => TrainingEvaluationScreen(
-            correct: correct,
-            incorrect: incorrect,
-            difficulty: difficulty,
-            operator: widget.operator,
-          ),
-        ));
-      }
-    }
-
     final deviceSize = ref.watch(deviceSizeProvider);
+    final questionText =
+        '${_currentQuestion.number1} ${_currentQuestion.operator} ${_currentQuestion.number2}';
+
+    List<int> answer = [_currentQuestion.answer, _currentQuestion.wrongAnswer];
+    answer.shuffle();
 
     return PopScope(
       canPop: false,
-      onPopInvoked: (didPop) {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) {
           return;
         }
         _onWillPop(context);
       },
       child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: const Color.fromARGB(255, 66, 112, 84),
-            title: Text("Question $numQuestions / 30"),
-            centerTitle: true,
-          ),
+        appBar: AppBar(
           backgroundColor: const Color.fromARGB(255, 66, 112, 84),
-          body: SizedBox(
-            width: deviceSize!.width,
-            height: deviceSize.height,
-            // color: Colors.red,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                SizedBox(
-                  width: deviceSize.width,
-                  height: deviceSize.height * 0.5,
-                  // color: Colors.blue,
-                  child: Column(
-                    children: [
-                      StatsWidget(
-                        correct: correct,
-                        incorrect: incorrect,
-                      ),
-                      const SizedBox(
-                        height: 150,
-                      ),
-                      AnimatedTextKit(
-                        key: _animatedTextKey,
-                        animatedTexts: [
-                          TyperAnimatedText(
-                            question,
-                            textStyle: randomTextTheme,
-                          ),
-                        ],
-                        isRepeatingAnimation: false,
-                      ),
-                    ],
-                  ),
+          title: Text("Question ${numQuestionsAnswered + 1} / 30"),
+          centerTitle: true,
+        ),
+        backgroundColor: const Color.fromARGB(255, 66, 112, 84),
+        body: SizedBox(
+          width: deviceSize!.width,
+          height: deviceSize.height,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: deviceSize.width,
+                height: deviceSize.height,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    StatsWidget(
+                      correct: correct,
+                      incorrect: incorrect,
+                    ),
+                    const SizedBox(
+                      height: 150,
+                    ),
+                    AnimatedTextKit(
+                      key: _animatedTextKey,
+                      animatedTexts: [
+                        TyperAnimatedText(
+                          questionText,
+                          textStyle: randomTextTheme,
+                        ),
+                      ],
+                      isRepeatingAnimation: false,
+                    ),
+                  ],
                 ),
-                SizedBox(
-                  width: deviceSize.width,
-                  height: deviceSize.height * 0.3,
-                  // color: Colors.yellow,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      SizedBox(
-                        width: 150,
-                        height: 200,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            randomize();
-                            int ans = answer % 2 == 0
-                                ? answer
-                                : random.nextInt(difficulty);
-                            checkAns(ans);
-                            checkGame();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            answer % 2 == 0
-                                ? "$answer"
-                                : random.nextInt(difficulty).toString(),
-                            style: buttonTextStyle(),
+              ),
+              SizedBox(
+                width: deviceSize.width,
+                height: deviceSize.height * 0.3,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 150,
+                      height: 200,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _checkAnswer(answer[0]);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                      ),
-                      const SizedBox(
-                        width: 15,
-                      ),
-                      SizedBox(
-                        width: 150,
-                        height: 200,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            randomize();
-                            int ans = answer % 2 == 1
-                                ? answer
-                                : random.nextInt(difficulty);
-                            checkAns(ans);
-                            checkGame();
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blue,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                          ),
-                          child: Text(
-                            answer % 2 == 1
-                                ? "$answer"
-                                : random.nextInt(difficulty).toString(),
-                            style: buttonTextStyle(),
-                          ),
+                        child: Text(
+                          "${answer[0]}",
+                          style: buttonTextStyle(),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(
+                      width: 15,
+                    ),
+                    SizedBox(
+                      width: 150,
+                      height: 200,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          _checkAnswer(answer[1]);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          "${answer[1]}",
+                          style: buttonTextStyle(),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          )),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

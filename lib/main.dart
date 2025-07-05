@@ -24,7 +24,6 @@ Future<void> main() async {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -32,8 +31,8 @@ class MyApp extends StatelessWidget {
       title: 'Flutter Demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            primary: const Color.fromRGBO(52, 103, 178, 100),
-            seedColor: const Color.fromRGBO(52, 103, 178, 100)),
+            primary: const Color.fromRGBO(52, 103, 178, 1),
+            seedColor: const Color.fromRGBO(52, 103, 178, 1)),
         useMaterial3: true,
         appBarTheme: const AppBarTheme(
             backgroundColor: Color.fromRGBO(52, 103, 178, 1),
@@ -46,9 +45,9 @@ class MyApp extends StatelessWidget {
           backgroundColor: const Color.fromRGBO(52, 103, 178, 1),
           height: 65,
           indicatorColor: Colors.white,
-          iconTheme: MaterialStateProperty.resolveWith<IconThemeData>(
-              (Set<MaterialState> states) {
-            if (states.contains(MaterialState.selected)) {
+          iconTheme: WidgetStateProperty.resolveWith<IconThemeData>(
+              (Set<WidgetState> states) {
+            if (states.contains(WidgetState.selected)) {
               return const IconThemeData(
                   color:
                       Color.fromRGBO(52, 103, 178, 1)); // Selected icon color
@@ -57,10 +56,10 @@ class MyApp extends StatelessWidget {
                   color: Colors.white); // Unselected icon color
             }
           }),
-          labelTextStyle: MaterialStateProperty.resolveWith<TextStyle>(
-              (Set<MaterialState> states) {
+          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle>(
+              (Set<WidgetState> states) {
             // Check if the 'selected' state is present
-            if (states.contains(MaterialState.selected)) {
+            if (states.contains(WidgetState.selected)) {
               return const TextStyle(
                   color: Colors.white); // White text for selected item
             } else {

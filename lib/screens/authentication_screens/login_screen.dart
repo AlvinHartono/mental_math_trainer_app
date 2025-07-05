@@ -30,11 +30,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     ),
   );
 
+  final ButtonStyle _buttonStyle = ElevatedButton.styleFrom(
+    backgroundColor: Colors.white,
+    shape: RoundedRectangleBorder(
+      // Changed to BorderRadius.circular for standard rounded corners.
+      // If you want a perfectly pill-shaped button for height 50, use BorderRadius.circular(25).
+      borderRadius: BorderRadius.circular(10),
+    ),
+    padding: const EdgeInsets.symmetric(horizontal: 16),
+    textStyle: const TextStyle(fontSize: 16),
+  );
+
   @override
   Widget build(BuildContext context) {
     final Size? deviceSize = ref.watch(deviceSizeProvider);
     final deviceHeight = deviceSize!.height;
     final deviceWidth = deviceSize.width;
+
+    List<TyperAnimatedText> animatedTexts = [
+      TyperAnimatedText("${rng1.nextInt(100)} + ${rng2.nextInt(100)}",
+          textStyle: randomTextTheme),
+      TyperAnimatedText("${rng1.nextInt(100)} - ${rng2.nextInt(100)}",
+          textStyle: randomTextTheme),
+      TyperAnimatedText("${rng1.nextInt(100)} / ${rng2.nextInt(10)}",
+          textStyle: randomTextTheme),
+      TyperAnimatedText("${rng1.nextInt(100)} * ${rng2.nextInt(10)}",
+          textStyle: randomTextTheme),
+    ];
 
     return Scaffold(
       backgroundColor: Theme.of(context).primaryColor,
@@ -45,134 +67,128 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               width: deviceWidth,
               height: deviceHeight,
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  SizedBox(
-                    width: deviceWidth,
-                    height: deviceHeight * 0.5,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: deviceHeight * 0.6 * 0.2,
-                        ),
-                        const SizedBox(
+                  const Spacer(flex: 2),
+
+                  // Logo and Animated Text Section
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.only(top: deviceWidth * 0.05),
+                        child: const SizedBox(
                           width: 100,
                           height: 100,
                           child: Image(
                             image: AssetImage('assets/logo.png'),
                           ),
                         ),
-                        SizedBox(
-                          height: deviceHeight * 0.6 * 0.15,
-                        ),
-                        AnimatedTextKit(
-                          repeatForever: true,
-                          animatedTexts: [
-                            TyperAnimatedText(
-                                "${rng1.nextInt(100)} + ${rng2.nextInt(100)}",
-                                textStyle: randomTextTheme),
-                            TyperAnimatedText(
-                                "${rng1.nextInt(100)} - ${rng2.nextInt(100)}",
-                                textStyle: randomTextTheme),
-                            TyperAnimatedText(
-                                "${rng1.nextInt(100)} / ${rng2.nextInt(10)}",
-                                textStyle: randomTextTheme),
-                            TyperAnimatedText(
-                                "${rng1.nextInt(100)} * ${rng2.nextInt(10)}",
-                                textStyle: randomTextTheme),
-                          ],
-                        ),
-                      ],
-                    ),
+                      ),
+                      Padding(
+                        padding:
+                            EdgeInsets.symmetric(vertical: deviceHeight * 0.03),
+                        child: AnimatedTextKit(animatedTexts: animatedTexts),
+                      ),
+                    ],
                   ),
-                  SizedBox(
-                    width: deviceWidth,
-                    height: deviceHeight * 0.3,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: (deviceHeight * 0.4 * 0.05),
-                        ),
-                        Text(
-                          "FlexMath",
-                          style: GoogleFonts.exo2(
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 36,
-                              color: Colors.white,
-                            ),
+
+                  // This Spacer creates space between the top section and the branding/buttons section
+                  const Spacer(flex: 3),
+
+                  // Branding and Buttons Section (IMPORTANT: Ensure no Spacer or Expanded here)
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Text(
+                        "FlexMath",
+                        style: GoogleFonts.exo2(
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 36,
+                            color: Colors.white,
                           ),
                         ),
-                        Text(
-                          "Train and Flex Your Mental Mathematics.",
-                          style: GoogleFonts.exo2(
-                            textStyle: const TextStyle(
-                              fontWeight: FontWeight.normal,
-                              fontSize: 18,
-                              color: Colors.white,
-                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Train and Flex Your Mental Mathematics.",
+                        style: GoogleFonts.exo2(
+                          textStyle: const TextStyle(
+                            fontWeight: FontWeight.normal,
+                            fontSize: 18,
+                            color: Colors.white,
                           ),
                         ),
-                        SizedBox(
-                          height: (deviceHeight * 0.4 * 0.15),
-                        ),
-                        SizedBox(
-                          width: deviceWidth * 0.9,
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            onPressed: () async {
-                              setState(() {
-                                isLoading = true;
-                              });
-                              try {
-                                UserCredential userCredential =
-                                    await FirebaseAuthService
-                                        .signInWithGoogle();
-                                print(userCredential);
-                              } catch (e) {
-                                // Handle the error appropriately
-                              } finally {
-                                if (mounted) {
-                                  setState(() {
-                                    isLoading = false;
-                                  });
-                                }
+                      ),
+                      const SizedBox(height: 30),
+
+                      // Google Sign in button
+                      SizedBox(
+                        width: deviceWidth * 0.9,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () async {
+                            setState(() {
+                              isLoading = true;
+                            });
+                            try {
+                              UserCredential userCredential =
+                                  await FirebaseAuthService.signInWithGoogle();
+                              print(userCredential);
+                            } catch (e) {
+                              print("Google Sign-in failed: $e");
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                    content: Text(
+                                        'Google Sign-in failed. Please try again.')),
+                              );
+                            } finally {
+                              if (mounted) {
+                                setState(() {
+                                  isLoading = false;
+                                });
                               }
-                            },
-                            icon: const ImageIcon(
-                              AssetImage('assets/google.png'),
-                            ),
-                            label: const Text(
-                              "Sign in with Google",
-                              style: TextStyle(color: Colors.black),
+                            }
+                          },
+                          icon: const ImageIcon(
+                            AssetImage('assets/google.png'),
+                          ),
+                          label: const Text(
+                            "Sign in with Google",
+                            style: TextStyle(color: Colors.black),
+                          ),
+                          style: _buttonStyle, // Apply the common style
+                        ),
+                      ),
+                      // Spacing between buttons
+                      const SizedBox(height: 20),
+
+                      // Email Sign-in Button
+                      SizedBox(
+                        width: deviceWidth * 0.9,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (context) => const EmailLoginScreen(),
+                            ));
+                          },
+                          icon: const Icon(Icons.email,
+                              color: Colors.black), // Icon color to match text
+                          label: const Text(
+                            "Sign in with email and password",
+                            style: TextStyle(
+                              color: Colors.black,
                             ),
                           ),
+                          style: _buttonStyle, // Apply the common style
                         ),
-                        const SizedBox(
-                          height: 5,
-                        ),
-                        SizedBox(
-                          width: deviceWidth * 0.9,
-                          height: 50,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => const EmailLoginScreen(),
-                              ));
-                            },
-                            icon: const Icon(Icons.email),
-                            label: const Text(
-                              "Sign in with email and password",
-                              style: TextStyle(
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
@@ -183,6 +199,3 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
   }
 }
-
-//https://youtu.be/VCrXSFqdsoA?feature=shared
-//https://fonts.google.com/specimen/Exo+2
