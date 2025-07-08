@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mental_math_trainer_app/firebase/firebase_auth_services.dart';
 import 'package:mental_math_trainer_app/widgets/loading_screen.dart';
+import 'package:shimmer/shimmer.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -11,15 +12,35 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  bool _isImageLoading = true;
+  User? _user;
+
+  @override
+  void initState() {
+    super.initState();
+    _user = FirebaseAuth.instance.currentUser;
+    _loadingImageWithDelay();
+  }
+
+  Future<void> _loadingImageWithDelay() async {
+    await Future.delayed(const Duration(seconds: 2));
+    if (mounted) {
+      setState(() {
+        _isImageLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final User? user = FirebaseAuth.instance.currentUser;
     bool isLoading = false;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Profile'),
         centerTitle: true,
       ),
+      backgroundColor: Theme.of(context).primaryColor,
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -30,25 +51,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   child: Center(
                     child: Column(
                       children: [
-                        const CircleAvatar(
-                          radius: 50,
-                          backgroundImage: NetworkImage(
-                            'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png',
-                          ),
-                        ),
+                        _isImageLoading
+                            ? Shimmer.fromColors(
+                                highlightColor: Colors.grey[100]!,
+                                baseColor: Colors.grey[300]!,
+                                child: const CircleAvatar(
+                                  radius: 50,
+                                  backgroundColor: Colors.white,
+                                ),
+                              )
+                            : const CircleAvatar(
+                                radius: 50,
+                                backgroundImage: NetworkImage(
+                                  'https://www.pngitem.com/pimgs/m/146-1468479_my-profile-icon-blank-profile-picture-circle-hd.png',
+                                ),
+                              ),
                         const SizedBox(height: 10),
                         Text(
-                          user?.displayName ?? 'User',
+                          _user?.displayName ?? 'User',
                           style: const TextStyle(
                             fontSize: 22,
-                            color: Colors.black,
+                            color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         Text(
-                          user?.email ?? 'youremail@example.com',
+                          _user?.email ?? 'youremail@example.com',
                           style: const TextStyle(
                             fontSize: 16,
+                            color: Colors.white,
                           ),
                         ),
                       ],
@@ -95,10 +126,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
       child: ListTile(
-        leading: Icon(icon),
-        title: Text(title),
+        leading: Icon(
+          icon,
+          color: Colors.white,
+        ),
+        title: Text(
+          title,
+          style: TextStyle(color: Colors.white),
+        ),
         trailing: const Icon(
           Icons.arrow_forward_ios,
+          color: Colors.white,
           size: 16,
         ),
         onTap: onTap,

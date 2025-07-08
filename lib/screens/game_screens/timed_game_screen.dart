@@ -41,6 +41,7 @@ class _TimedGameScreenState extends ConsumerState<TimedGameScreen> {
   late Question _currentQuestion;
   final QuestionGenerator _questionGenerator = QuestionGenerator();
   final start = DateTime.now();
+
   // String question = '';
   Key _animatedTextkey = UniqueKey();
 

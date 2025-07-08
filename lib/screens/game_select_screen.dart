@@ -17,7 +17,7 @@ class GameSelectScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).primaryColor,
       body: const SafeArea(
         child: SingleChildScrollView(
           child: Center(
