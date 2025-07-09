@@ -3,90 +3,45 @@ import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mental_math_trainer_app/models/training_game_state.dart';
 import 'package:mental_math_trainer_app/providers/device_provider.dart';
+import 'package:mental_math_trainer_app/providers/training_game_provider.dart';
 import 'package:mental_math_trainer_app/screens/evaluation_screens/training_evaluation_screen.dart';
 import 'package:mental_math_trainer_app/services/question_generator.dart';
 import 'package:mental_math_trainer_app/widgets/stats_custom.dart';
 
 Random random = Random();
 
-class GameWarmupScreen extends ConsumerStatefulWidget {
-  const GameWarmupScreen(
-      {super.key, required this.difficulty, required this.operator});
+class GameWarmupScreen extends ConsumerWidget {
+  const GameWarmupScreen({
+    super.key,
+    required this.difficulty,
+    required this.operator,
+  });
   final int difficulty;
   final String operator;
-  @override
-  ConsumerState<GameWarmupScreen> createState() => _GameWarmupScreenState();
-}
 
-class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
-  int correct = 0, incorrect = 0;
-  late int maxNumberDifficulty;
-  late String selectedOperator;
-  late Question _currentQuestion;
-  final QuestionGenerator _questionGenerator = QuestionGenerator();
-  int numQuestionsAnswered = 0;
-  Key _animatedTextKey = UniqueKey();
+  // Key _animatedTextKey = UniqueKey();
 
-  TextStyle randomTextTheme = GoogleFonts.exo2(
-    textStyle: const TextStyle(
-      fontWeight: FontWeight.bold,
-      fontSize: 80,
-      color: Colors.white,
-    ),
-  );
-  double getFontSize() {
+  TextStyle get randomTextTheme => GoogleFonts.exo2(
+        textStyle: const TextStyle(
+          fontWeight: FontWeight.bold,
+          fontSize: 80,
+          color: Colors.white,
+        ),
+      );
+  double getFontSize(int maxNumberDifficulty) {
     return maxNumberDifficulty == 1000
         ? 36
         : 48; // Change font size if difficulty is 100
   }
 
-  TextStyle buttonTextStyle() {
+  TextStyle buttonTextStyle(int maxNumberDifficulty) {
     return TextStyle(
-      fontSize: getFontSize(),
+      fontSize: getFontSize(maxNumberDifficulty),
       color: Colors.white,
       fontWeight: FontWeight.bold,
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    maxNumberDifficulty = widget.difficulty;
-    selectedOperator = widget.operator;
-    _generateNewQuestion();
-  }
-
-  void _generateNewQuestion() {
-    _currentQuestion = _questionGenerator.generateQuestion(
-        maxNumberDifficulty, selectedOperator);
-    _animatedTextKey = UniqueKey();
-    setState(() {});
-  }
-
-  void _checkAnswer(int userAnswer) {
-    setState(() {
-      if (userAnswer == _currentQuestion.answer) {
-        correct++;
-      } else {
-        incorrect++;
-      }
-      numQuestionsAnswered++;
-    });
-    _checkGameProgress();
-    _generateNewQuestion();
-  }
-
-  void _checkGameProgress() {
-    if (numQuestionsAnswered == 30) {
-      Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (context) => TrainingEvaluationScreen(
-            correct: correct,
-            incorrect: incorrect,
-            difficulty: maxNumberDifficulty,
-            operator: selectedOperator),
-      ));
-    }
   }
 
   Future<bool> _onWillPop(BuildContext context) async {
@@ -115,13 +70,34 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final trainingGameState = ref.watch(trainingGameProviderProvider(
+        difficulty: difficulty, operator: operator));
+
+    ref.listen<TrainingGameState>(
+      trainingGameProviderProvider(difficulty: difficulty, operator: operator),
+      (previous, next) {
+        if (next.questionsAnswered == next.totalQuestions) {
+          Navigator.of(context).pushReplacement(MaterialPageRoute(
+            builder: (context) => TrainingEvaluationScreen(
+                correct: next.correctAnswers,
+                incorrect: next.incorrectAnswers,
+                difficulty: difficulty,
+                operator: operator),
+          ));
+        }
+      },
+    );
+
     final deviceSize = ref.watch(deviceSizeProvider);
     final questionText =
-        '${_currentQuestion.number1} ${_currentQuestion.operator} ${_currentQuestion.number2}';
+        '${trainingGameState.currentQuestion.number1} ${trainingGameState.currentQuestion.operator} ${trainingGameState.currentQuestion.number2}';
 
-    List<int> answer = [_currentQuestion.answer, _currentQuestion.wrongAnswer];
-    answer.shuffle();
+    List<int> answerOptions = [
+      trainingGameState.currentQuestion.answer,
+      trainingGameState.currentQuestion.wrongAnswer
+    ];
+    answerOptions.shuffle();
 
     return PopScope(
       canPop: false,
@@ -134,7 +110,8 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color.fromARGB(255, 66, 112, 84),
-          title: Text("Question ${numQuestionsAnswered + 1} / 30"),
+          title:
+              Text("Question ${trainingGameState.questionsAnswered + 1} / 30"),
           centerTitle: true,
         ),
         backgroundColor: const Color.fromARGB(255, 66, 112, 84),
@@ -151,14 +128,14 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     StatsWidget(
-                      correct: correct,
-                      incorrect: incorrect,
+                      correct: trainingGameState.correctAnswers,
+                      incorrect: trainingGameState.incorrectAnswers,
                     ),
                     const SizedBox(
                       height: 150,
                     ),
                     AnimatedTextKit(
-                      key: _animatedTextKey,
+                      key: ValueKey(questionText),
                       animatedTexts: [
                         TyperAnimatedText(
                           questionText,
@@ -181,7 +158,12 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
                       height: 200,
                       child: ElevatedButton(
                         onPressed: () {
-                          _checkAnswer(answer[0]);
+                          ref
+                              .read(trainingGameProviderProvider(
+                                      difficulty: difficulty,
+                                      operator: operator)
+                                  .notifier)
+                              .submitAnswer(answerOptions[0]);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
@@ -190,8 +172,8 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
                           ),
                         ),
                         child: Text(
-                          "${answer[0]}",
-                          style: buttonTextStyle(),
+                          "${answerOptions[0]}",
+                          style: buttonTextStyle(difficulty),
                         ),
                       ),
                     ),
@@ -203,7 +185,12 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
                       height: 200,
                       child: ElevatedButton(
                         onPressed: () {
-                          _checkAnswer(answer[1]);
+                          ref
+                              .read(trainingGameProviderProvider(
+                                      difficulty: difficulty,
+                                      operator: operator)
+                                  .notifier)
+                              .submitAnswer(answerOptions[1]);
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue,
@@ -212,8 +199,8 @@ class _GameWarmupScreenState extends ConsumerState<GameWarmupScreen> {
                           ),
                         ),
                         child: Text(
-                          "${answer[1]}",
-                          style: buttonTextStyle(),
+                          "${answerOptions[1]}",
+                          style: buttonTextStyle(difficulty),
                         ),
                       ),
                     ),
